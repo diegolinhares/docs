@@ -1,0 +1,200 @@
+---
+title: 'Criar Assinatura'
+description: 'Crie uma nova assinatura vinculando um cliente e plano existentes'
+openapi: 'POST /subscriptions'
+menu_title: Criar
+menu_order: 1
+---
+
+### Campos Obrigatórios
+
+| Campo | Tipo | Descrição |
+|-------|------|-------------|
+| `customer_id` | string | UUID do cliente existente |
+| `plan_id` | string | UUID do plano existente |
+| `payment_method_type` | string | Método de pagamento. Valores: `"credit_card"`, `"pix"` |
+
+### Campos Opcionais
+
+| Campo | Tipo | Descrição |
+|-------|------|-------------|
+| `discounts` | array | Array de objetos de desconto (opcional) |
+
+### Objeto de Desconto
+
+| Campo | Tipo | Descrição |
+|-------|------|-------------|
+| `type` | string | Tipo de desconto: `"percentage"` ou `"fixed"` |
+| `amount` | integer | Valor fixo em centavos (obrigatório quando `type` é `"fixed"`) |
+| `percentage` | number | Percentual de desconto (obrigatório quando `type` é `"percentage"`) |
+| `cycles` | integer | Número de ciclos de cobrança que o desconto se aplica |
+| `description` | string | Descrição do desconto |
+
+## Request Examples
+
+### Subscription with Credit card payment
+
+```bash
+curl -X POST "https://api.simplo.com/api/v1/subscriptions" \
+  -H "Authorization: ApiKey your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subscription": {
+      "customer_id": "550e8400-e29b-41d4-a716-446655440000",
+      "plan_id": "550e8400-e29b-41d4-a716-446655440001",
+      "payment_method_type": "credit_card"
+    }
+  }'
+```
+
+### Subscription with PIX payment
+
+```bash
+curl -X POST "https://api.simplo.com/api/v1/subscriptions" \
+  -H "Authorization: ApiKey your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subscription": {
+      "customer_id": "550e8400-e29b-41d4-a716-446655440000",
+      "plan_id": "550e8400-e29b-41d4-a716-446655440001",
+      "payment_method_type": "pix"
+    }
+  }'
+```
+
+### Subscription with percentage discount
+
+```bash
+curl -X POST "https://api.simplo.com/api/v1/subscriptions" \
+  -H "Authorization: ApiKey your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subscription": {
+      "customer_id": "550e8400-e29b-41d4-a716-446655440000",
+      "plan_id": "550e8400-e29b-41d4-a716-446655440001",
+      "payment_method_type": "credit_card",
+      "discounts": [
+        {
+          "type": "percentage",
+          "percentage": 10,
+          "cycles": 3,
+          "description": "Welcome discount"
+        }
+      ]
+    }
+  }'
+```
+
+### Subscription with fixed amount discount
+
+```bash
+curl -X POST "https://api.simplo.com/api/v1/subscriptions" \
+  -H "Authorization: ApiKey your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subscription": {
+      "customer_id": "550e8400-e29b-41d4-a716-446655440000",
+      "plan_id": "550e8400-e29b-41d4-a716-446655440001",
+      "payment_method_type": "credit_card",
+      "discounts": [
+        {
+          "type": "fixed",
+          "amount": 500,
+          "cycles": 2,
+          "description": "Fixed amount discount"
+        }
+      ]
+    }
+  }'
+```
+## Resposta
+
+### Resposta de Sucesso (201 Created)
+
+Retorna o objeto da assinatura criada.
+
+#### Corpo da Resposta
+
+```json
+{
+  "subscription": {
+    "id": "550e8400-e29b-41d4-a716-446655440002",
+    "object": "subscription",
+    "status": "active",
+    "amount": 10000,
+    "external_code": null,
+    "start_date": "2024-01-15T10:30:00Z",
+    "interval_count": 1,
+    "interval_type": "month",
+    "billing_cycles": null,
+    "billing_trigger_day": 15,
+    "billing_trigger_type": "day_of_month",
+    "payment_method_type": "credit_card",
+    "plan": {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "Premium Plan"
+    },
+    "customer": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    "discounts": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440003",
+        "type": "percentage",
+        "status": "active",
+        "amount": null,
+        "percentage": 10,
+        "cycles": 3,
+        "description": "Welcome discount"
+      }
+    ]
+  }
+}
+```
+
+### Respostas de Erro
+
+#### 404 Not Found
+
+Retornado quando:
+- Cliente ou plano não encontrado
+- Cliente ou plano pertence a conta diferente
+- Chave de API inválida
+
+```json
+{
+  "error": {
+    "message": "Customer not found",
+    "code": "customer_not_found"
+  }
+}
+```
+
+#### 422 Unprocessable Entity
+
+Retornado quando a validação falha para campos obrigatórios.
+
+```json
+{
+  "error": {
+    "message": "Validation failed",
+    "errors": [
+      {
+        "field": "customer_id",
+        "message": "Customer ID is required"
+      }
+    ]
+  }
+}
+```
+
+## Observações Importantes
+
+- O cliente e plano devem pertencer à mesma conta da API key
+- Customer ID e Plan ID devem ser UUIDs válidos
+- Métodos de pagamento suportados: `credit_card`, `pix`
+- Descontos são opcionais e podem ser mistos (percentual e fixo)
+- Valores monetários estão em centavos
+- A assinatura será iniciada automaticamente após criação bem-sucedida

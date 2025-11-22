@@ -1,33 +1,66 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'Introdução'
+description: 'A API do Simplo permite integrar assinaturas recorrentes na sua aplicação.'
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Autenticação
 
-## Welcome
+Todas as requisições à API devem ser autenticadas usando **API Key** no formato `ApiKey {sua_chave}`.
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+### Formato do Header
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```bash
+Authorization: ApiKey sua_api_key_aqui
+```
 
-## Authentication
+### Como obter sua API Key
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+1. Faça login no painel do Simplo
+2. Vá para Configurações > Integrações > API Keys
+3. Clique em "Gerar Nova API Key"
+4. Copie e guarde sua chave em local seguro
+
+### Exemplo de Uso
+
+```bash
+curl -X GET "https://api.simplo.com/api/v1/subscriptions" \
+  -H "Authorization: ApiKey sua_api_key_aqui" \
+  -H "Content-Type: application/json"
+```
+
+### Erros de Autenticação
+
+<AccordionGroup>
+  <Accordion title="401 Unauthorized">
+    Retorna quando a API key não é fornecida ou está em formato inválido.
+  </Accordion>
+  <Accordion title="404 Not Found">
+    Retorna quando a API key é inválida ou a conta está inativa.
+  </Accordion>
+</AccordionGroup>
+
+## Formatos de Resposta
+
+A API utiliza o formato `application/problem+json` para respostas de erro:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+  "type": "https://problems-registry.smartbear.com/validation-error/",
+  "status": 422,
+  "title": "Validation Error",
+  "detail": "O payload da requisição contém erros de validação",
+  "errors": [
+    {
+      "detail": "Customer ID é obrigatório",
+      "pointer": "/subscription/customer_id"
+    }
+  ]
+}
+```
+
+## Versão da API
+
+A versão atual é `v1` e está disponível em:
+```
+https://api.simplo.com/api/v1/
 ```
